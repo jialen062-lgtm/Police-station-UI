@@ -28,6 +28,7 @@ jobs:
           gradle-version: '8.8'
 
       - name: Extract source archive
+        shell: bash
         run: |
           set -euo pipefail
           ZIP_FILE="Police-station-UI-1.20.1-Forge-Java17.zip"
@@ -36,9 +37,10 @@ jobs:
           unzip -q "$ZIP_FILE" -d source
 
       - name: Locate Gradle project
+        shell: bash
         run: |
           set -euo pipefail
-          BUILD_FILE="$(find source -name build.gradle -print -quit)"
+          BUILD_FILE="$(find source -type f -name build.gradle -print -quit)"
           test -n "$BUILD_FILE"
           PROJECT_DIR="$(dirname "$BUILD_FILE")"
           test -f "$PROJECT_DIR/settings.gradle"
