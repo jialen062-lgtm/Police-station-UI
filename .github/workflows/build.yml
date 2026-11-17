@@ -12,7 +12,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,12 +27,29 @@ jobs:
         with:
           gradle-version: '8.8'
 
+      - name: Extract source archive
+        run: |
+          set -euo pipefail
+          ZIP_FILE="Police-station-UI-1.20.1-Forge-Java17.zip"
+          test -s "$ZIP_FILE"
+          mkdir -p source
+          unzip -q "$ZIP_FILE" -d source
+
+      - name: Locate Gradle project
+        run: |
+          set -euo pipefail
+          BUILD_FILE="$(find source -name build.gradle -print -quit)"
+          test -n "$BUILD_FILE"
+          PROJECT_DIR="$(dirname "$BUILD_FILE")"
+          test -f "$PROJECT_DIR/settings.gradle"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
       - name: Build mod
-        run: gradle --no-daemon clean build
+        run: gradle --no-daemon -p "$PROJECT_DIR" clean build
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: Police-station-UI-1.20.1-Forge
-          path: build/libs/*.jar
+          path: ${{ env.PROJECT_DIR }}/build/libs/*.jar
           if-no-files-found: error
