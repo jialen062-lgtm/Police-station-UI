@@ -25,35 +25,41 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract source ZIP
+      - name: Extract fixed2 source
         shell: bash
         run: |
           ZIP_FILE=$(find . -maxdepth 1 -type f \
-            -name 'Police-station-UI-1.20.1-Forge-Java17*.zip' \
+            -name 'Police-station-UI-1.20.1-Forge-Java17-fixed2*.zip' \
             | head -n 1)
 
           if [ -z "$ZIP_FILE" ]; then
-            echo "错误：没有找到源码 ZIP 文件"
+            echo "错误：没有找到 fixed2 源码 ZIP"
+            echo "请确认 ZIP 已上传到仓库根目录"
             exit 1
           fi
 
+          echo "使用源码：$ZIP_FILE"
           mkdir -p source
           unzip -o "$ZIP_FILE" -d source
 
       - name: Locate Gradle project
         shell: bash
         run: |
-          BUILD_FILE=$(find source -name build.gradle -type f | head -n 1)
+          BUILD_FILE=$(find source -type f \
+            \( -name build.gradle -o -name build.gradle.kts \) \
+            | head -n 1)
 
           if [ -z "$BUILD_FILE" ]; then
-            echo "错误：没有找到 build.gradle"
-            find source -maxdepth 4 -type f
+            echo "错误：没有找到 Gradle 项目"
+            find source -maxdepth 5 -type f
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$BUILD_FILE")
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
           echo "项目目录：$PROJECT_DIR"
+          ls -la "$PROJECT_DIR"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -61,11 +67,14 @@ jobs:
           gradle-version: '8.8'
 
       - name: Build mod
-        run: gradle --no-daemon -p "$PROJECT_DIR" clean build
+        run: |
+          gradle --no-daemon \
+            -p "$PROJECT_DIR" \
+            clean build
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: Police-Station-UI
+          name: Police-Station-UI-fixed2
           path: ${{ env.PROJECT_DIR }}/build/libs/*.jar
           if-no-files-found: error
